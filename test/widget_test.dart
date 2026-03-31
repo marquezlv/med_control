@@ -1,25 +1,26 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:med_control/main.dart';
+import 'package:med_control/models/medication_model.dart';
+import 'package:med_control/screens/medications.dart';
 
 void main() {
-  testWidgets('renders medication dashboard layout', (
+  testWidgets('renders medication form with required fields', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const MedControlApp());
+    await tester.pumpWidget(const MaterialApp(home: MedicationFormScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Home'), findsAtLeastNWidgets(1));
-    expect(find.byType(Scaffold), findsAtLeastNWidgets(1));
-    expect(find.byIcon(Icons.home_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.medication_rounded), findsOneWidget);
+    expect(find.text('Add medication'), findsOneWidget);
+    expect(find.text('Medication name *'), findsOneWidget);
+    expect(find.text('Current quantity'), findsOneWidget);
+    expect(find.text('Medication color'), findsOneWidget);
+    expect(find.text('Dosage per day'), findsOneWidget);
+    expect(find.text('Days of week'), findsOneWidget);
+    expect(find.text('Save medication'), findsOneWidget);
+  });
+
+  test('converts a color to hex', () {
+    expect(MedicationModel.colorToHex(const Color(0xFFFFC0CB)), '#FFC0CB');
   });
 }

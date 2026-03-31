@@ -86,20 +86,62 @@ class MedicationService {
     final db = await _db;
     final formattedDate = _toDateOnly(date);
 
-    if (taken) {
-      await db.insert(MedicationTable.taken, {
-        MedicationTable.takenMedicationId: medicationId,
-        MedicationTable.takenDate: formattedDate,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
-      return;
-    }
+    await db.transaction((txn) async {
+      final existingTaken = await txn.query(
+        MedicationTable.taken,
+        columns: [MedicationTable.takenId],
+        where:
+            '${MedicationTable.takenMedicationId} = ? AND ${MedicationTable.takenDate} = ?',
+        whereArgs: [medicationId, formattedDate],
+        limit: 1,
+      );
+      final alreadyTaken = existingTaken.isNotEmpty;
 
-    await db.delete(
-      MedicationTable.taken,
-      where:
-          '${MedicationTable.takenMedicationId} = ? AND ${MedicationTable.takenDate} = ?',
-      whereArgs: [medicationId, formattedDate],
-    );
+      if (taken == alreadyTaken) {
+        return;
+      }
+
+      final medicationRows = await txn.query(
+        MedicationTable.medications,
+        columns: [MedicationTable.quantity, MedicationTable.dosage],
+        where: '${MedicationTable.id} = ?',
+        whereArgs: [medicationId],
+        limit: 1,
+      );
+
+      if (medicationRows.isEmpty) {
+        return;
+      }
+
+      final medication = medicationRows.first;
+      final currentQuantity = medication[MedicationTable.quantity] as int;
+      final dosage = medication[MedicationTable.dosage] as int;
+      final nextQuantity = taken
+          ? (currentQuantity - dosage).clamp(0, currentQuantity)
+          : currentQuantity + dosage;
+
+      await txn.update(
+        MedicationTable.medications,
+        {MedicationTable.quantity: nextQuantity},
+        where: '${MedicationTable.id} = ?',
+        whereArgs: [medicationId],
+      );
+
+      if (taken) {
+        await txn.insert(MedicationTable.taken, {
+          MedicationTable.takenMedicationId: medicationId,
+          MedicationTable.takenDate: formattedDate,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        return;
+      }
+
+      await txn.delete(
+        MedicationTable.taken,
+        where:
+            '${MedicationTable.takenMedicationId} = ? AND ${MedicationTable.takenDate} = ?',
+        whereArgs: [medicationId, formattedDate],
+      );
+    });
   }
 
   String _toDateOnly(DateTime date) {

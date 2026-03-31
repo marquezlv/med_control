@@ -12,18 +12,24 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  int _homeRefreshSignal = 0;
+  int _medicationsRefreshSignal = 0;
 
   void _openMedicationManager() {
     setState(() {
       _selectedIndex = 1;
+      _medicationsRefreshSignal++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final screens = <Widget>[
-      HomeScreen(onOpenMedicationManager: _openMedicationManager),
-      const MedicationsScreen(),
+      HomeScreen(
+        onOpenMedicationManager: _openMedicationManager,
+        refreshSignal: _homeRefreshSignal,
+      ),
+      MedicationsScreen(refreshSignal: _medicationsRefreshSignal),
     ];
 
     return Scaffold(
@@ -33,6 +39,11 @@ class _MainNavigationState extends State<MainNavigation> {
         onDestinationSelected: (index) {
           setState(() {
             _selectedIndex = index;
+            if (index == 0) {
+              _homeRefreshSignal++;
+            } else {
+              _medicationsRefreshSignal++;
+            }
           });
         },
         destinations: const [

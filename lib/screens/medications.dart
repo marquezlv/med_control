@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import '../models/medication_model.dart';
 import '../services/medication.dart';
 
 class MedicationsScreen extends StatefulWidget {
-  const MedicationsScreen({super.key});
+  const MedicationsScreen({super.key, required this.refreshSignal});
+
+  final int refreshSignal;
 
   @override
   State<MedicationsScreen> createState() => _MedicationsScreenState();
@@ -19,6 +22,14 @@ class _MedicationsScreenState extends State<MedicationsScreen> {
   void initState() {
     super.initState();
     _medicationsFuture = _service.getAllMedications();
+  }
+
+  @override
+  void didUpdateWidget(covariant MedicationsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshSignal != widget.refreshSignal) {
+      _reload();
+    }
   }
 
   Future<void> _reload() async {
@@ -202,8 +213,8 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
 
   late final TextEditingController _nameController;
   late final TextEditingController _quantityController;
-  late final TextEditingController _colorController;
   late final TextEditingController _dosageController;
+  late Color _selectedColor;
 
   final Set<int> _selectedDays = <int>{};
   bool _isSaving = false;
@@ -226,9 +237,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
     _quantityController = TextEditingController(
       text: (initial?.quantity ?? 0).toString(),
     );
-    _colorController = TextEditingController(
-      text: initial?.colorHex ?? '#E77070',
-    );
+    _selectedColor = MedicationModel.parseColor(initial?.colorHex ?? '#E77070');
     _dosageController = TextEditingController(
       text: (initial?.dosage ?? 1).toString(),
     );
@@ -239,7 +248,6 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
   void dispose() {
     _nameController.dispose();
     _quantityController.dispose();
-    _colorController.dispose();
     _dosageController.dispose();
     super.dispose();
   }
@@ -260,7 +268,7 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       id: editing?.id,
       name: _nameController.text.trim(),
       quantity: int.parse(_quantityController.text.trim()),
-      colorHex: _normalizeHex(_colorController.text.trim()),
+      colorHex: MedicationModel.colorToHex(_selectedColor),
       dosage: int.parse(_dosageController.text.trim()),
       daysOfWeek: _selectedDays.toList()..sort(),
     );
@@ -279,6 +287,51 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
       return;
     }
     Navigator.of(context).pop();
+  }
+
+  Future<void> _openColorPicker() async {
+    Color tempColor = _selectedColor;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Choose medication color'),
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return SingleChildScrollView(
+                child: ColorPicker(
+                  pickerColor: tempColor,
+                  enableAlpha: false,
+                  displayThumbColor: true,
+                  labelTypes: const [ColorLabelType.hex],
+                  onColorChanged: (color) {
+                    setDialogState(() {
+                      tempColor = color;
+                    });
+                  },
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                setState(() {
+                  _selectedColor = tempColor;
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Select'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -320,18 +373,46 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
               },
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _colorController,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Color (hex, e.g. #FFC0CB)',
+            InkWell(
+              onTap: _openColorPicker,
+              borderRadius: BorderRadius.circular(16),
+              child: Ink(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: _selectedColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black12),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Medication color',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          Text(MedicationModel.colorToHex(_selectedColor)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.color_lens_outlined),
+                  ],
+                ),
               ),
-              validator: (value) {
-                if (_isValidHex(value?.trim() ?? '')) {
-                  return null;
-                }
-                return 'Enter a valid RGB hex color.';
-              },
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -378,17 +459,6 @@ class _MedicationFormScreenState extends State<MedicationFormScreen> {
         ),
       ),
     );
-  }
-
-  String _normalizeHex(String value) {
-    final stripped = value.replaceAll('#', '').toUpperCase();
-    return '#$stripped';
-  }
-
-  bool _isValidHex(String value) {
-    final stripped = value.replaceAll('#', '').trim();
-    final regex = RegExp(r'^[0-9A-Fa-f]{6}$');
-    return regex.hasMatch(stripped);
   }
 }
 

@@ -81,4 +81,10 @@ class MedicationModel {
     final alphaPrefixed = normalized.length == 6 ? 'FF$normalized' : normalized;
     return Color(int.parse(alphaPrefixed, radix: 16));
   }
+
+  static String colorToHex(Color color) {
+    final rgbValue = color.toARGB32() & 0x00FFFFFF;
+    final hexValue = rgbValue.toRadixString(16).toUpperCase().padLeft(6, '0');
+    return '#$hexValue';
+  }
 }
