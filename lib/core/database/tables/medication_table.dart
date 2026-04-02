@@ -8,6 +8,7 @@ class MedicationTable {
   static const String colorHex = 'color_hex';
   static const String dosage = 'dosage';
   static const String daysOfWeek = 'days_of_week';
+  static const String notificationTime = 'notification_time';
 
   static const String takenId = 'id';
   static const String takenMedicationId = 'medication_id';
@@ -21,7 +22,8 @@ CREATE TABLE $medications (
 	$quantity INTEGER NOT NULL DEFAULT 0,
 	$colorHex TEXT NOT NULL,
 	$dosage INTEGER NOT NULL DEFAULT 1,
-	$daysOfWeek TEXT NOT NULL
+	$daysOfWeek TEXT NOT NULL,
+	$notificationTime TEXT
 );
 ''';
 

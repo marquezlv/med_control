@@ -10,6 +10,7 @@ class MedicationModel {
     required this.colorHex,
     required this.dosage,
     required this.daysOfWeek,
+    this.notificationTime,
   });
 
   final int? id;
@@ -18,6 +19,7 @@ class MedicationModel {
   final String colorHex;
   final int dosage;
   final List<int> daysOfWeek;
+  final String? notificationTime; // stored as 'HH:mm'
 
   Map<String, Object?> toMap() {
     return {
@@ -27,6 +29,7 @@ class MedicationModel {
       MedicationTable.colorHex: colorHex,
       MedicationTable.dosage: dosage,
       MedicationTable.daysOfWeek: encodeDays(daysOfWeek),
+      MedicationTable.notificationTime: notificationTime,
     };
   }
 
@@ -38,6 +41,7 @@ class MedicationModel {
       colorHex: map[MedicationTable.colorHex] as String,
       dosage: map[MedicationTable.dosage] as int,
       daysOfWeek: decodeDays(map[MedicationTable.daysOfWeek] as String),
+      notificationTime: map[MedicationTable.notificationTime] as String?,
     );
   }
 
@@ -48,6 +52,7 @@ class MedicationModel {
     String? colorHex,
     int? dosage,
     List<int>? daysOfWeek,
+    Object? notificationTime = _sentinel,
   }) {
     return MedicationModel(
       id: id ?? this.id,
@@ -56,8 +61,13 @@ class MedicationModel {
       colorHex: colorHex ?? this.colorHex,
       dosage: dosage ?? this.dosage,
       daysOfWeek: daysOfWeek ?? this.daysOfWeek,
+      notificationTime: notificationTime == _sentinel
+          ? this.notificationTime
+          : notificationTime as String?,
     );
   }
+
+  static const Object _sentinel = Object();
 
   static String encodeDays(List<int> days) {
     final normalized = [...days]..sort();

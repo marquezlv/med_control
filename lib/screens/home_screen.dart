@@ -25,13 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
   late DateTime _displayedMonth;
 
   static const Map<int, String> _weekdayLabels = {
-    1: 'Mon',
-    2: 'Tue',
-    3: 'Wed',
-    4: 'Thu',
-    5: 'Fri',
-    6: 'Sat',
-    7: 'Sun',
+    1: 'Seg',
+    2: 'Ter',
+    3: 'Qua',
+    4: 'Qui',
+    5: 'Sex',
+    6: 'Sáb',
+    7: 'Dom',
   };
 
   @override
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(title: const Text('Início')),
       body: FutureBuilder<_HomeTodayData>(
         future: _todayFuture,
         builder: (context, snapshot) {
@@ -123,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Text('Error loading home data: ${snapshot.error}'),
+                child: Text('Erro ao carregar dados: ${snapshot.error}'),
               ),
             );
           }
@@ -142,15 +142,15 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  'Medicine today',
+                  'Medicamentos de hoje',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 12),
                 if (data.medications.isEmpty)
                   Card(
                     child: ListTile(
-                      title: const Text('No medications for today.'),
-                      subtitle: const Text('Tap to open medications.'),
+                      title: const Text('Nenhum medicamento para hoje.'),
+                      subtitle: const Text('Toque para abrir medicamentos.'),
                       trailing: const Icon(Icons.open_in_new_rounded),
                       onTap: widget.onOpenMedicationManager,
                     ),
@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         title: Text(medication.name),
                         subtitle: Text(
-                          'Dosage: ${medication.dosage} • Qty: ${medication.quantity}',
+                          'Dose: ${medication.dosage} • Qtd: ${medication.quantity}',
                         ),
                         trailing: Checkbox(
                           value: data.takenIds.contains(medication.id),
@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                 const SizedBox(height: 24),
                 Text(
-                  'Medication calendar',
+                  'Calendário de medicamentos',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 6),
@@ -365,7 +365,7 @@ class _MedicationWeekCalendar extends StatelessWidget {
               children: List<Widget>.generate(7, (index) {
                 final weekday = _weekStartOrder[index];
                 final label = weekday == 7
-                    ? 'Sun'
+                    ? 'Dom'
                     : weekdayLabels[weekday] ?? '';
                 return Expanded(
                   child: Center(
@@ -537,11 +537,11 @@ class _MedicationWeekCalendar extends StatelessWidget {
               );
             }),
             const SizedBox(height: 16),
-            Text('Legend', style: Theme.of(context).textTheme.titleSmall),
+            Text('Legenda', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             if (legendMedications.isEmpty)
               Text(
-                'No medications registered yet.',
+                'Nenhum medicamento registrado ainda.',
                 style: Theme.of(context).textTheme.bodyMedium,
               )
             else
@@ -593,9 +593,9 @@ class _MedicationWeekCalendar extends StatelessWidget {
       context: context,
       builder: (BuildContext ctx) {
         return AlertDialog(
-          title: const Text('Medication Runout'),
+          title: const Text('Medicação acaba esse dia'),
           content: Text(
-            'This medication "$medicationName" will run out on ${runoutDate.year}-${runoutDate.month.toString().padLeft(2, '0')}-${runoutDate.day.toString().padLeft(2, '0')}.',
+            'Esta medicação "$medicationName" acabará em ${runoutDate.day.toString().padLeft(2, '0')}-${runoutDate.month.toString().padLeft(2, '0')}-${runoutDate.year}.',
           ),
           actions: [
             TextButton(
